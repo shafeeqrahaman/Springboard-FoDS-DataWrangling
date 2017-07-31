@@ -12,15 +12,27 @@ refine_original <- read.csv("refine_original.csv")
 
 refine_clean <- refine_original %>% 
   # 1: Clean up brand names
+  
+  # mutate(
+  #   company = case_when(
+  #     substr(tolower(.$company), 0, 1) == "a" ~ "akzo", 
+  #     substr(tolower(.$company), 0, 1) == "p" | substr(tolower(.$company), 0, 1) == "f" ~ "philips", 
+  #     substr(tolower(.$company), 0, 1) == "u" ~ "unilever", 
+  #     substr(tolower(.$company), 0, 1) == "v" ~ "van houten"
+  #   )
+  # ) %>% 
+  
+  mutate(company = tolower(company)) %>%  
+  
   mutate(
     company = case_when(
-      substr(tolower(.$company), 0, 1) == "a" ~ "akzo", 
-      substr(tolower(.$company), 0, 1) == "p" | substr(tolower(.$company), 0, 1) == "f" ~ "philips", 
-      substr(tolower(.$company), 0, 1) == "u" ~ "unilever", 
-      substr(tolower(.$company), 0, 1) == "v" ~ "van houten"
+      substr(.$company, 0, 1) == "a" ~ "akzo",
+      substr(.$company, 0, 1) == "p" | substr(.$company, 0, 1) == "f" ~ "philips",
+      substr(.$company, 0, 1) == "u" ~ "unilever",
+      substr(.$company, 0, 1) == "v" ~ "van houten"
     )
   ) %>% 
-  
+
   # 2: Separate product code and number
   separate(Product.code...number, c("product_code", "product_number"), sep = "-") %>%
   
@@ -50,3 +62,4 @@ refine_clean <- refine_original %>%
 
 # 6: Submit the project on Github
 write.csv(refine_clean, file = "refine_clean.csv", row.names = FALSE)
+

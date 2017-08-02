@@ -1,0 +1,107 @@
+---
+title: "Run Analysis Read Me"
+author: "Winnie Han"
+date: "1 August 2017"
+output: html_document
+---
+
+#### Load required packages 
+```{r echo=TRUE, message=FALSE}
+library(dplyr)
+library(tidyr)
+```
+
+### 0: Load the data in RStudio 
+
+#### Variable names for *test* and *train* data sets, rename columns, make rows unique.
+```{r echo=TRUE, message=FALSE}
+features <- read.table("UCI HAR Dataset/features.txt") 
+features <- features %>% 
+  setNames(c("Key", "Name")) %>% 
+  mutate(Name = make.names(Name, unique = TRUE)) 
+```
+
+#### *Activity labels* and *activity names*, rename columns.
+```{r echo=TRUE, message=FALSE}
+act_labels <- read.table("UCI HAR Dataset/activity_labels.txt") 
+act_labels <- act_labels %>% 
+  setNames(c("ActivityLabel", "ActivityName"))
+```
+
+#### *Activity labels* for *test* data, rename column.
+```{r echo=TRUE, message=FALSE}
+test_act <- read.table("UCI HAR Dataset/test/y_test.txt") 
+test_act <- test_act %>% 
+  setNames(c("ActivityLabel")) 
+```
+
+#### *Subjects* for *test* data, rename column.
+```{r echo=TRUE, message=FALSE}
+test_subject <- read.table("UCI HAR Dataset/test/subject_test.txt") 
+test_subject <- test_subject %>%
+  setNames(c("Subject"))
+```
+
+#### *Test* data, rename columns using *features*, add *activity labels* and *subjects* as new variables.
+```{r echo=TRUE, message=FALSE}
+test <- read.table("UCI HAR Dataset/test/X_test.txt") 
+test <- test %>% 
+  setNames(features$Name) %>% 
+  mutate(ActivityLabel = test_act$ActivityLabel, Subject = test_subject$Subject)
+```
+
+#### *Activity labels* for *train* data, rename column.
+```{r echo=TRUE, message=FALSE}
+train_act <- read.table("UCI HAR Dataset/train/y_train.txt") 
+train_act <- train_act %>% 
+  setNames(c("ActivityLabel")) 
+```
+
+#### *Subjects* for *train* data, rename column.
+```{r echo=TRUE, message=FALSE}
+train_subject <- read.table("UCI HAR Dataset/train/subject_train.txt") 
+train_subject <- train_subject %>%
+  setNames(c("Subject"))
+```
+
+#### *Train* data, rename columns using *features*, add *activity label* and *subject* as new variables.
+```{r echo=TRUE, message=FALSE}
+train <- read.table("UCI HAR Dataset/train/X_train.txt")
+train <- train %>% 
+  setNames(features$Name) %>% 
+  mutate(ActivityLabel = train_act$ActivityLabel, Subject = train_subject$Subject)
+```
+
+### 1: Merge data sets 
+#### Merge *test* and *train* datasets into a new dataset.
+```{r echo=TRUE, message=FALSE}
+ucihar <- bind_rows(test, train)
+```
+
+### 2: Mean and standard deviation
+#### Add *activity mean* and *activity standard deviation* as new variables for each observation.
+```{r echo=TRUE, message=FALSE}
+ucihar <- ucihar %>% 
+  mutate(ActivityMean = rowMeans(ucihar), ActivityStdDev = apply(ucihar, 1, sd)) 
+```
+
+### 3: Add new variables 
+#### *Activity label* already added to *test* and *train* separately prior to merge, add *activity name*.
+```{r echo=TRUE, message=FALSE}
+ucihar <- left_join(ucihar, act_labels, by = "ActivityLabel")
+```
+
+### 4: Create tidy data set 
+#### Group by *activity label / name* and *subject*, calculate the mean for all other variables.
+#### Assign the result to a new data set.
+```{r echo=TRUE, message=FALSE}
+run_analysis <- ucihar %>% 
+  group_by(ActivityLabel, ActivityName, Subject) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE))) 
+```
+
+### 5: Submit on github 
+#### Write the tidy data set created above to a new CSV file.
+```{r echo=TRUE, message=FALSE}
+write.csv(run_analysis, file = "run_analysis.csv", row.names = FALSE)
+```
